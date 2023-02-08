@@ -12,7 +12,7 @@ from ray.air import session, ScalingConfig
 from ray.train.torch import TorchTrainer
 import torch
 import torch.nn.functional as F
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def dataset(args):
@@ -34,17 +34,9 @@ def train(args):
         # exclude all the padding inputs after tokenization.
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Create a model and initialize it with empty weights
-    config = AutoConfig.from_pretrained(args.model_dir)
-    with init_empty_weights():
-        model = AutoModelForCausalLM.from_config(config)
 
-    # Load the checkpoint and dispatch it to the right devices
-    model = load_checkpoint_and_dispatch(
-        model,
-        path.join(args.model_dir, "pytorch_model.bin"),
-        device_map="auto",
-        no_split_module_classes=["GPTJBlock"],
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_dir, torch_dtype=torch.bfloat16,
     )
     model.train()
 
@@ -90,7 +82,7 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument(
         "--model_dir",
         type=str,
