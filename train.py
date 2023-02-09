@@ -87,8 +87,9 @@ def train(args):
                 torch.cuda.empty_cache()
 
     # Save fine-tuned model at output directory.
-    print(f"Saving model in {args.output_dir}")
+    print(f"Saving model and tokenizer in {args.output_dir}")
     model.save_pretrained(args.output_dir)
+    tokenizer.save_pretrained(args.output_dir)
 
 
 if __name__ == "__main__":
