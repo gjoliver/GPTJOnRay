@@ -2,7 +2,6 @@ import argparse
 from os import path
 
 from accelerate import init_empty_weights, load_checkpoint_and_dispatch
-import pandas as pd
 import ray
 from ray.air import session, ScalingConfig
 from ray.train.torch import TorchTrainer
@@ -24,9 +23,8 @@ def train(args):
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_dir)
     if tokenizer.pad_token is None:
-        # Add padding token. GPT-J does not seem to have a default
-        # padding token.
-        # This doesn't really matter because attention_mask should
+        # Add padding token. GPT-J does not have a default padding token.
+        # This doesn't really matter because attention_masks will
         # exclude all the padding inputs after tokenization.
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -65,8 +63,7 @@ def train(args):
             outputs = model(**batch)
 
             loss = F.cross_entropy(
-                # Basically take the logits and flatten batch and
-                # sequence dimensions.
+                # Take the logits and flatten batch and sequence dimensions.
                 outputs.logits[:, :-1, :].flatten(0, -2),
                 # GPT-J outputs logits for all tokens in the sequence
                 # except for the first.
