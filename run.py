@@ -24,13 +24,13 @@ def run(args):
     )
 
     while True:
-        x = input("----- prompt (type 'exit' to exit): ")
-        if x == "exit": break
+        x = input("prompt (press RETURN to exit): ")
+        if not x: break
 
         inputs = tokenizer(x, return_tensors="pt")
         outputs = model.generate(**inputs)
 
-        print(tokenizer.decode(outputs[0].tolist()))
+        print("gpt-j: ", tokenizer.decode(outputs[0].tolist()))
 
 
 if __name__ == "__main__":
