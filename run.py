@@ -28,7 +28,7 @@ def run(args):
         if x == "exit": break
 
         inputs = tokenizer(x, return_tensors="pt")
-        outputs = model.generate(inputs["input_ids"])
+        outputs = model.generate(**inputs)
 
         print(tokenizer.decode(outputs[0].tolist()))
 
