@@ -1,18 +1,14 @@
-""""/mnt/shared_storage/jungong/gpt_j/models/models--EleutherAI--gpt-j-6B/snapshots/6e35e2148e92edf096e94d39ac2b98ad59e25975
-"""
-
 import argparse
 from os import path
 
 from accelerate import init_empty_weights, load_checkpoint_and_dispatch
-import bitsandbytes as bnb
 import pandas as pd
 import ray
 from ray.air import session, ScalingConfig
 from ray.train.torch import TorchTrainer
 import torch
 import torch.nn.functional as F
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 
 def dataset(args):
@@ -34,13 +30,24 @@ def train(args):
         # exclude all the padding inputs after tokenization.
         tokenizer.pad_token = tokenizer.eos_token
 
+    # Create a model and initialize it with empty weights
+    config = AutoConfig.from_pretrained(
+        args.model_dir
+    )
+    with init_empty_weights():
+        model = AutoModelForCausalLM.from_config(config)
 
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_dir, torch_dtype=torch.bfloat16,
+    # Load the checkpoint and dispatch it to the right devices
+    model = load_checkpoint_and_dispatch(
+        model,
+        path.join(args.model_dir, "pytorch_model.bin"),
+        device_map="auto",
+        no_split_module_classes=["GPTJBlock"],
+        dtype=torch.bfloat16,
     )
     model.train()
 
-    optimizer = bnb.optim.AdamW8bit(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     step = 0
     for epoch in range(args.num_epochs):
@@ -48,7 +55,6 @@ def train(args):
                 batch_size=args.batch_size,
         ):
             optimizer.zero_grad()
-
             batch = tokenizer(
                 batch["text"].values.tolist(),
                 padding="longest",
@@ -56,11 +62,14 @@ def train(args):
                 max_length=args.max_seq_length,
                 return_tensors='pt',
             )
-            print(batch)
             outputs = model(**batch)
 
             loss = F.cross_entropy(
+                # Basically take the logits and flatten batch and
+                # sequence dimensions.
                 outputs.logits[:, :-1, :].flatten(0, -2),
+                # GPT-J outputs logits for all tokens in the sequence
+                # except for the first.
                 batch['input_ids'][:, 1:].flatten(),
                 reduction='mean'
             )
@@ -77,6 +86,7 @@ def train(args):
             session.report(results)
 
     # Save fine-tuned model at output directory.
+    print(f"Saving model in {args.output_dir}")
     model.save_pretrained(args.output_dir)
 
 
@@ -118,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=1,
+        default=8,
         help="Train batch size.",
     )
     parser.add_argument(
