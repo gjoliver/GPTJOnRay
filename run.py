@@ -1,6 +1,3 @@
-""""/mnt/shared_storage/jungong/gpt_j/models/models--EleutherAI--gpt-j-6B/snapshots/6e35e2148e92edf096e94d39ac2b98ad59e25975
-"""
-
 import argparse
 from os import path
 
@@ -38,7 +35,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument(
         "--model_dir",
         type=str,
