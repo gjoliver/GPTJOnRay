@@ -50,7 +50,7 @@ def train(args):
     step = 0
     for epoch in range(args.num_epochs):
         for batch in train_dataset.iter_batches(
-                batch_size=args.batch_size,
+            batch_size=args.batch_size,
         ):
             optimizer.zero_grad()
             batch = tokenizer(
@@ -81,6 +81,10 @@ def train(args):
                 "loss": loss.detach().item(),
             }
             session.report(results)
+
+            if step % 100 == 0:
+                # Use for preventing GPU OOM.
+                torch.cuda.empty_cache()
 
     # Save fine-tuned model at output directory.
     print(f"Saving model in {args.output_dir}")
@@ -119,13 +123,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--num_epochs",
         type=int,
-        default=2,
+        default=1,
         help="Number of train epochs.",
     )
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=8,
+        default=32,
         help="Train batch size.",
     )
     parser.add_argument(
