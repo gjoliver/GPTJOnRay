@@ -18,13 +18,13 @@ def run(args):
     # Load the checkpoint and dispatch it to the right devices
     model = load_checkpoint_and_dispatch(
         model,
-        path.join(args.model_dir, "pytorch_model.bin"),
+        args.model_dir,
         device_map="auto",
         no_split_module_classes=["GPTJBlock"],
     )
 
     while True:
-        x = input("----- prompt: ")
+        x = input("----- prompt (type 'exit' to exit): ")
         if x == "exit": break
 
         inputs = tokenizer(x, return_tensors="pt")
