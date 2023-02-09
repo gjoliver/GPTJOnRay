@@ -4,6 +4,19 @@ This example shows how to fine-tune a GPT-J-6B model using Ray Air
 and HuggingFace Accelerate on a single g5.12xlarge instance with
 4 A10G GPUs.
 
+Example texts generated after 1 epoch of fine-tuning using the sample Shakespeare dataset:
+
+```
+prompt: I am
+gpt-j: I am not mad, I have a daughter, call her forth,<|endoftext|>
+
+prompt: to be
+gpt-j: to be a man, and to be a woman too, and to be a<|endoftext|>
+
+prompt: honor
+gpt-j: honor, and the best of my blood, and the heir of<|endoftext|>
+```
+
 ### Step 1
 Download and cache a pre-trained gpt-j-6B model locally.
 The examples uses [EleutherAI/gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B).
